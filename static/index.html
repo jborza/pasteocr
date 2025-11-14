@@ -1,0 +1,96 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>Paste to OCR</title>
+  <style>
+    body { font-family: system-ui, Arial; max-width: 900px; margin: 32px auto; }
+    .container { display:flex; gap:16px; }
+    .box { flex:1; }
+    img { max-width:100%; border:1px solid #ddd; }
+    textarea { width:100%; height:400px; }
+    .controls { margin:10px 0; }
+  </style>
+</head>
+<body>
+  <h1>Paste to OCR</h1>
+  <p>Paste an image from your clipboard (Ctrl+V / Cmd+V) or choose a file. The OCR text will appear on the right.</p>
+
+  <div class="controls">
+    <input type="file" id="fileInput" accept="image/*">
+    <button id="ocrBtn">Upload & OCR</button>
+  </div>
+
+  <div class="container">
+    <div class="box">
+      <h3>Image</h3>
+      <div id="imageWrapper">Drop/paste an image here</div>
+    </div>
+    <div class="box">
+      <h3>OCR Text</h3>
+      <textarea id="result" placeholder="OCR text will appear here..."></textarea>
+    </div>
+  </div>
+
+  <script>
+    const fileInput = document.getElementById('fileInput');
+    const imageWrapper = document.getElementById('imageWrapper');
+    const ocrBtn = document.getElementById('ocrBtn');
+    const resultArea = document.getElementById('result');
+
+    let currentBlob = null;
+
+    function showImageFromBlob(blob) {
+      currentBlob = blob;
+      imageWrapper.innerHTML = '';
+      const img = document.createElement('img');
+      img.src = URL.createObjectURL(blob);
+      imageWrapper.appendChild(img);
+    }
+
+    fileInput.addEventListener('change', (e) => {
+      const f = e.target.files[0];
+      if (!f) return;
+      showImageFromBlob(f);
+    });
+
+    window.addEventListener('paste', (ev) => {
+      const items = ev.clipboardData && ev.clipboardData.items;
+      if (!items) return;
+      for (let i = 0; i < items.length; i++) {
+        const item = items[i];
+        if (item.type.indexOf('image') === 0) {
+          const blob = item.getAsFile();
+          showImageFromBlob(blob);
+          break;
+        }
+      }
+    });
+
+    async function uploadAndOCR() {
+      if (!currentBlob) {
+        alert('Paste or choose an image first.');
+        return;
+      }
+      resultArea.value = 'Uploading and OCR-ing...';
+      const fd = new FormData();
+      fd.append('file', currentBlob, 'paste.png');
+
+      try {
+        // Use relative path so it works when served from the same origin
+        const resp = await fetch('/ocr', {
+          method: 'POST',
+          body: fd
+        });
+        if (!resp.ok) throw new Error('Network error: ' + resp.status);
+        const data = await resp.json();
+        resultArea.value = data.text || '';
+      } catch (err) {
+        resultArea.value = 'Error: ' + err.message;
+      }
+    }
+
+    ocrBtn.addEventListener('click', uploadAndOCR);
+  </script>
+</body>
+</html>
