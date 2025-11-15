@@ -1,4 +1,3 @@
-```markdown
 # Simple Paste-to-OCR (FastAPI + vanilla JS)
 
 Overview
@@ -24,10 +23,3 @@ Run locally
 Docker (optional)
 - If you want everything in one container, use the provided Dockerfile (it installs tesseract in the image).
 
-Security & production
-- Limit upload sizes (e.g. via nginx or middleware).
-- Restrict CORS origins.
-- Add authentication if needed.
-- Use a worker queue for heavy loads.
-
-```
