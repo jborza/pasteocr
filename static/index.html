@@ -19,6 +19,8 @@
 
   <div class="controls">
     <input type="file" id="fileInput" accept="image/*">
+    <label for="langInput">Language (e.g. ces):</label>
+    <input type="text" id="langInput" placeholder="Language (e.g., ces)" value="---">
     <button id="ocrBtn">Upload & OCR (manual)</button>
     <span class="status" id="statusText"></span>
   </div>
@@ -36,6 +38,7 @@
 
   <script>
     const fileInput = document.getElementById('fileInput');
+    const langInput = document.getElementById('langInput');
     const imageWrapper = document.getElementById('imageWrapper');
     const ocrBtn = document.getElementById('ocrBtn');
     const resultArea = document.getElementById('result');
@@ -104,9 +107,16 @@
       const fd = new FormData();
       fd.append('file', currentBlob, 'paste.png');
 
+      // Get language value and add to URL if not "---"
+      const langValue = langInput.value.trim();
+      let url = '/ocr';
+      if (langValue && langValue !== '---') {
+        url += '?lang=' + encodeURIComponent(langValue);
+      }
+
       try {
         // Use relative path so it works when served from the same origin (recommended)
-        const resp = await fetch('/ocr', {
+        const resp = await fetch(url, {
           method: 'POST',
           body: fd
         });

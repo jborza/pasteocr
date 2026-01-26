@@ -1,4 +1,4 @@
-from fastapi import FastAPI, File, UploadFile
+from fastapi import FastAPI, File, UploadFile, Query
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
@@ -34,9 +34,10 @@ class OCRResponse(BaseModel):
 
 
 @app.post("/ocr", response_model=OCRResponse)
-async def ocr(file: UploadFile = File(...)):
+async def ocr(file: UploadFile = File(...), lang: str = Query("")):
     """
     Accepts an image file and returns OCR text.
+    Optional lang parameter for language code (e.g., 'ces' for Czech).
     """
     # Basic validation
     if not file.content_type or file.content_type.split("/")[0] != "image":
@@ -49,6 +50,10 @@ async def ocr(file: UploadFile = File(...)):
         return {"text": ""}
 
     # Use pytesseract (requires system tesseract binary)
-    text = pytesseract.image_to_string(image)
+    # If lang is provided and not empty, use it; otherwise use default
+    if lang:
+        text = pytesseract.image_to_string(image, lang=lang)
+    else:
+        text = pytesseract.image_to_string(image)
 
     return {"text": text}
